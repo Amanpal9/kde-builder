@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: None
+# SPDX-License-Identifier: CC0-1.0
+name: KDE Builder preflight
+on: [push]
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: report-failed-update-fetch
+      - uses: astral-sh/setup-uv@v7
+      - run: uv venv --python 3.14 && uv pip install -r pyproject.toml --group dev --group docs
+      - run: PYTHONPATH="$PWD" .venv/bin/pytest --cov --cov-report term --cov-report xml:/tmp/coverage.xml
+      - run: .venv/bin/ruff check .
+      - run: .venv/bin/reuse lint
+      - run: .venv/bin/sphinx-build -M html doc /tmp/kde-docs -D language=en -j auto
+      - run: .venv/bin/sphinx-build -M epub doc /tmp/kde-docs -D language=en -j auto
