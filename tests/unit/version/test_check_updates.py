@@ -3,7 +3,9 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import logging
+import subprocess
 from typing import Any
+from unittest.mock import Mock
 
 import pytest
 
@@ -197,3 +199,15 @@ def test_missing_remote_tags(monkeypatch):
 
     lrt = Version.latest_remote_tag()
     assert lrt == "v0.0"
+
+
+def test_failed_git_fetch(monkeypatch, caplog):
+    fetch = Mock(return_value=subprocess.CompletedProcess([], 1))
+    monkeypatch.setattr(subprocess, "run", fetch)
+    monkeypatch.setattr(Version, "detect_installation_type", lambda: InstallationType.GIT)
+    monkeypatch.setattr(Version, "script_version", lambda: "26.04")
+
+    Version.check_for_updates()
+
+    fetch.assert_called_once()
+    assert "Cannot fetch remote branch to check for updates" in caplog.text

@@ -132,7 +132,10 @@ class Version:
         current_ver = cls.script_version()
 
         if inst_type == InstallationType.GIT:
-            subprocess.run("git fetch origin master:refs/remotes/origin/master", shell=True, cwd=KB_REPO_DIR)
+            fetch = subprocess.run(["git", "fetch", "origin", "master:refs/remotes/origin/master"], cwd=KB_REPO_DIR)
+            if fetch.returncode:
+                logger_app.warning(" y[*] Cannot fetch remote branch to check for updates.")
+                return
             local_master_head = subprocess.run("git rev-parse --short=7 refs/heads/master", shell=True, capture_output=True, check=False, cwd=KB_REPO_DIR).stdout.decode("utf-8").removesuffix("\n")
             remote_master_head = subprocess.run("git rev-parse --short=7 refs/remotes/origin/master", shell=True, capture_output=True, check=False, cwd=KB_REPO_DIR).stdout.decode("utf-8").removesuffix("\n")
 
